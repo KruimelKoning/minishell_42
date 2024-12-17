@@ -6,60 +6,76 @@
 /*   By: akuijer <akuijer@student.codam.nl>           +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/04/01 15:44:28 by akuijer       #+#    #+#                 */
-/*   Updated: 2024/04/11 17:51:02 by lbartels      ########   odam.nl         */
+/*   Updated: 2024/04/24 16:22:54 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../incl/minishell.h"
 
-bool	parse_flag(char **split_cmd, int *index)
+bool	skip_flag(char *str)
 {
-	int	i;
-	int	j;
+	int32_t	i;
+	bool	newline;
 
-	i = *index;
-	while (split_cmd[i] && split_cmd[i][0] == '-')
+	i = 0;
+	newline = true;
+	if (!str)
+		return (true);
+	while (!ft_strncmp(str + i, "-n", 2))
 	{
-		j = 1;
-		while (split_cmd[i][j] == 'n')
+		newline = false;
+		i += 2;
+		while (str[i] == 'n')
 		{
-			j++;
+			i++;
 		}
-		if (split_cmd[i][j] != '\0')
-		{
-			return (false);
-		}
-		i++;
+		if (str[i] != ' ' && str[i] != '\0')
+			return (true);
+		skip_space(&i, str);
 	}
-	(*index) = i;
-	return (true);
+	return (newline);
 }
 
-void	ft_echo(char **split_cmd, t_pipex info)
+bool	handle_flag(char **split_cmd, int32_t *i)
 {
-	int		i;
-	bool	n;
+	bool	newline;
 
-	free_info(&info, true);
-	errno = 0;
-	n = (split_cmd[1] && !ft_strncmp(split_cmd[1], "-n", 3));
-	i = 1 + n;
-	if (parse_flag(split_cmd, &i) == false)
+	newline = true;
+	if (split_cmd[1])
 	{
-		free_2d(split_cmd);
-		ft_error("invalid flags, echo only uses -n", 1);
+		newline = skip_flag(split_cmd[1]);
 	}
+	while (!newline)
+	{
+		(*i)++;
+		if (skip_flag(split_cmd[*i]))
+			break ;
+	}
+	return (newline);
+}
+
+void	ft_echo(char **split_cmd, t_pipex info, bool free_env)
+{
+	int32_t	i;
+	int32_t	j;
+	bool	newline;
+
+	i = 1;
+	j = 0;
+	free_info(&info, free_env);
+	errno = 0;
+	newline = handle_flag(split_cmd, &i);
 	while (split_cmd[i])
 	{
-		ft_putstr_fd(split_cmd[i], 1);
+		ft_putstr_fd(split_cmd[i] + j, 1);
+		j = 0;
 		i++;
 		if (split_cmd[i])
 		{
 			ft_putchar_fd(' ', 1);
 		}
 	}
-	if (!n)
+	if (newline)
 		ft_putchar_fd('\n', 1);
-	free_2d(split_cmd);
 	g_last_exit_code = 0;
 }

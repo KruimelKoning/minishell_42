@@ -6,7 +6,7 @@
 /*   By: lbartels <lbartels@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/03/15 16:25:41 by lbartels      #+#    #+#                 */
-/*   Updated: 2024/04/18 14:59:41 by lbartels      ########   odam.nl         */
+/*   Updated: 2024/04/29 17:45:51 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -38,6 +38,14 @@
 
 # include <signal.h>
 
+# define PARENT 0
+# define COMMAND 1
+# define HEREDOC 2
+# define QUIT_HEREDOC 4
+
+# define TEMP_DIR_ERROR "Cannot retrieve parent directory. \
+using a temporary directory instead"
+
 typedef struct t_command
 {
 	char	**in;
@@ -50,23 +58,27 @@ typedef struct t_command
 
 typedef struct t_pipex
 {
-	t_command *cmd;
-	int		cmd_count;
-	char	**env;
+	t_command	*cmd;
+	int			cmd_count;
+	char		**env;
 }	t_pipex;
 
+extern int8_t	g_status;
 extern int32_t	g_last_exit_code;
 
 // Execute:
 
 int		pipex(t_pipex info);
+int		open_file(char *file, char flag, bool append);
 bool	check_builtin(t_pipex *info);
 
 // Error Management:
 
-void	ft_error(char *error_msg, char exit_val);
-void	ft_error2(char *error_msg, char exit_val, t_pipex info);
-void	free_and_throw(char *err_msg, char exit_val, char **s1, char **s2);
+void	ft_error(char *error_msg, uint8_t exit_val);
+void	ft_error2(char *error_msg, uint8_t exit_val, t_pipex info);
+void	ft_error3(char *error_msg, t_pipex info, void *free1, void *free2);
+void	ft_error4(char *error_msg, uint8_t exit_val, t_pipex info, char **spl);
+void	free_and_throw(char *err_msg, uint8_t exit_val, char **s1, char **s2);
 
 // Memory Management:
 
@@ -79,7 +91,7 @@ void	free_info(t_pipex *info, bool free_env);
 
 void	skip_space(int *i, char *str);
 size_t	ft_strllen(const char *str, const char *list);
-char	*ft_strjoin2(char *s1, char *s2);
+char	*ft_strjoin2(char *s1, char *s2, bool add_space);
 void	check_quotes(bool *s_quote, bool *d_quote, int i, char *str);
 void	trim_cmd(char **split_cmd);
 
@@ -88,7 +100,7 @@ void	trim_cmd(char **split_cmd);
 void	parse_all(char	*line, t_pipex *info);
 int		check_input(char *line);
 char	*ft_getenv(char *name, char **env);
-char	*ft_getenv_start(char *name, char **env);
+int32_t	ft_getenv_index(char *name, char **env);
 void	trim_str(char **str);
 void	trim_in_out(t_pipex *info);
 
@@ -96,5 +108,6 @@ void	trim_in_out(t_pipex *info);
 
 void	set_signal(void);
 char	**init_env(char **env);
+void	inc_shell_lvl(char ***env);
 
 #endif

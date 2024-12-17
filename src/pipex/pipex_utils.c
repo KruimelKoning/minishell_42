@@ -6,7 +6,7 @@
 /*   By: lbartels <lbartels@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2023/12/08 17:24:37 by lbartels      #+#    #+#                 */
-/*   Updated: 2024/04/18 18:18:47 by lbartels      ########   odam.nl         */
+/*   Updated: 2024/04/29 16:15:12 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,47 +15,74 @@
 #include "../../incl/commands.h"
 #include "../../incl/parse.h"
 
-int	open_file(char *file, char flag, bool append, t_pipex info)
+void	get_here_doc(t_pipex info, int32_t cmd_i, int32_t *fd)
 {
-	int	fd;
+	char	*buffer;
 
-	fd = -1;
-	if (flag == 'i')
-		fd = open(file, O_RDONLY);
-	else if (flag == 'o' && !append)
-		fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0777);
-	else if (flag == 'o' && append)
-		fd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0777);
-	if (fd == -1)
+	while (g_status != QUIT_HEREDOC)
 	{
-		ft_error2("Error opening file", 1, info);
+		ft_putstr_fd("> ", 1);
+		buffer = get_next_line(STDIN_FILENO);
+		if (!buffer)
+		{
+			ft_error2("gnl error", 1, info);
+			close(fd[0]);
+		}
+		if (!ft_strncmp(buffer, info.cmd[cmd_i].delim,
+				ft_strlen(info.cmd[cmd_i].delim)) && ft_strlen(buffer) - 1 \
+				== ft_strlen(info.cmd[cmd_i].delim))
+		{
+			free(buffer);
+			return ;
+		}
+		ft_putstr_fd(buffer, fd[1]);
+		free(buffer);
 	}
-	return (fd);
 }
 
-char	*find_path(char *cmd, t_pipex info)
+void	here_doc(t_pipex info, int32_t cmd_i)
 {
-	int		i;
+	int		fd[2];
+
+	g_status = HEREDOC;
+	if (pipe(fd) == -1)
+		ft_error2("pipe error", 1, info);
+	close(fd[1]);
+	get_here_doc(info, cmd_i, fd);
+	if (dup2(fd[0], STDIN_FILENO) < 0)
+		ft_error2("dup2 error", 1, info);
+	close(fd[0]);
+	if (g_status == QUIT_HEREDOC)
+	{
+		free_info(&info, true);
+		exit(0);
+	}
+}
+
+char	*find_path(char **split_cmd, t_pipex info, int32_t i)
+{
 	char	**full_path;
 	char	*path;
 	char	*ret;
 
-	if (access(cmd, F_OK) == 0 && access(cmd, X_OK) == 0)
-		return (cmd);
+	if (access(split_cmd[0], F_OK) == 0 && access(split_cmd[0], X_OK) == 0)
+		return (split_cmd[0]);
 	full_path = ft_split(ft_getenv("PATH", info.env), ':');
-	i = 0;
+	if (!full_path)
+		ft_error4("split error", 1, info, split_cmd);
 	while (full_path && full_path[i])
 	{
-		path = ft_strjoin(full_path[i], "/");
-		ret = ft_strjoin(path, cmd);
+		path = ft_strjoin(full_path[i++], "/");
+		ret = ft_strjoin(path, split_cmd[0]);
 		free(path);
-		if (access(ret, F_OK) == 0 && access(ret, X_OK) == 0)
+		if (!ret)
 		{
 			free_2d(full_path);
-			return (ret);
+			ft_error4("strjoin error", 1, info, split_cmd);
 		}
+		if (access(ret, F_OK) == 0 && access(ret, X_OK) == 0)
+			return (free_2d(full_path), ret);
 		free(ret);
-		i++;
 	}
 	free_2d(full_path);
 	return (NULL);
@@ -64,22 +91,24 @@ char	*find_path(char *cmd, t_pipex info)
 void	ft_execve(char **split_cmd, t_pipex info)
 {
 	if (!ft_strncmp(split_cmd[0], "echo", 5))
-		ft_echo(split_cmd, info);
+		ft_echo(split_cmd, info, true);
 	else if (!ft_strncmp(split_cmd[0], "cd", 3))
-		ft_cd(split_cmd, info);
+		ft_cd(split_cmd, &info, true);
 	else if (!ft_strncmp(split_cmd[0], "pwd", 4))
-		ft_pwd(split_cmd, info);
+		ft_pwd(split_cmd, info, true);
 	else if (!ft_strncmp(split_cmd[0], "export", 7))
-		ft_pwd(split_cmd, info);
+		ft_export(split_cmd, &info, true);
 	else if (!ft_strncmp(split_cmd[0], "unset", 6))
-		ft_pwd(split_cmd, info);
+		ft_unset(split_cmd, &info, true);
 	else if (!ft_strncmp(split_cmd[0], "env", 4))
-		ft_env(split_cmd, info);
+		ft_env(split_cmd, info, true);
 	else if (!ft_strncmp(split_cmd[0], "exit", 5))
-		ft_pwd(split_cmd, info);
+		ft_exit(split_cmd, info);
 	else
 		return ;
-	exit(EXIT_SUCCESS);
+	free_2d(split_cmd);
+	clear_history();
+	exit(g_last_exit_code);
 }
 
 void	execute(char *cmd, t_pipex info)
@@ -87,23 +116,26 @@ void	execute(char *cmd, t_pipex info)
 	char	**split_cmd;
 	char	*path;
 
-	if (!cmd[0])
-		ft_error("empty command", 1);
 	split_cmd = smart_split(cmd, ' ');
 	if (!split_cmd)
-		ft_error("split error execute", 1);
+		ft_error2("split error execute", 1, info);
 	trim_cmd(split_cmd);
+	if (!split_cmd[0] || !split_cmd[0][0])
+		ft_error4("", 0, info, split_cmd);
 	ft_execve(split_cmd, info);
-	path = find_path(split_cmd[0], info);
+	path = find_path(split_cmd, info, 0);
 	if (!path)
-	{
-		ft_error2("command not found", 127, info);
-	}
+		ft_error4("command not found", 127, info, split_cmd);
 	if (execve(path, split_cmd, info.env) == -1)
 	{
-		free(path);
-		ft_error2("execve error", 1, info);
+		if (split_cmd[0] != path)
+			free(path);
+		ft_error4("command not found", 1, info, split_cmd);
 	}
 	free_info(&info, true);
+	if (split_cmd[0] != path)
+		free(path);
+	free_2d(split_cmd);
+	clear_history();
 	exit(EXIT_SUCCESS);
 }

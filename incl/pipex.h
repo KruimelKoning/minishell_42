@@ -6,7 +6,7 @@
 /*   By: lbartels <lbartels@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2023/12/06 16:43:52 by lbartels      #+#    #+#                 */
-/*   Updated: 2024/04/18 15:57:09 by lbartels      ########   odam.nl         */
+/*   Updated: 2024/04/24 17:33:17 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,15 +17,13 @@
 
 typedef struct vars
 {
-	int		i;
-	int		file_in;
-	int		file_out;
-	int		status;
-	pid_t	*p_id2;
-	int		io[2];
+	int32_t	i;
+	int32_t	status;
+	pid_t	p_id;
+	int32_t	*fd;
 }	t_vars;
 
 void	execute(char *cmd, t_pipex info);
-int		open_file(char *file, char flag, bool append, t_pipex info);
+void	here_doc(t_pipex info, int32_t cmd_i);
 
 #endif

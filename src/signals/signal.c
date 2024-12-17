@@ -6,7 +6,7 @@
 /*   By: lbartels <lbartels@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/03/21 15:35:17 by lbartels      #+#    #+#                 */
-/*   Updated: 2024/04/10 13:31:14 by akuijer       ########   odam.nl         */
+/*   Updated: 2024/04/29 17:44:39 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,10 +16,19 @@ void	ctrl_c_handler(int signum)
 {
 	if (signum == SIGINT)
 	{
-		ft_putchar_fd('\n', STDOUT_FILENO);
-		rl_on_new_line();
+		if (g_status != HEREDOC)
+		{
+			ft_putchar_fd('\n', 1);
+		}
+		if (g_status == PARENT)
+		{
+			rl_on_new_line();
+		}
 		rl_replace_line("", 0);
 		rl_redisplay();
+		g_last_exit_code = 130;
+		if (g_status == HEREDOC)
+			g_status = QUIT_HEREDOC;
 	}
 }
 
@@ -33,8 +42,7 @@ void	set_signal(void)
 	sigaddset(&sa.sa_mask, SIGINT);
 	if (sigaction(SIGINT, &sa, NULL) == -1)
 	{
-		perror("sigaction");
-		exit(EXIT_FAILURE);
+		ft_error("Sigaction error", 1);
 	}
 	signal(SIGQUIT, SIG_IGN);
 }

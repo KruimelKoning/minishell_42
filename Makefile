@@ -2,12 +2,12 @@ NAME =		minishell
 
 SRC =		src/minishell.c \
 			src/commands/builtin.c src/commands/cd.c src/commands/echo.c src/commands/env.c src/commands/exit.c src/commands/export.c src/commands/pwd.c src/commands/unset.c \
-			src/parse/check_input.c src/parse/expand_token.c src/parse/get_input.c src/parse/parse.c src/parse/trim_quotes.c\
+			src/parse/check_input.c src/parse/expand_token.c src/parse/get_input.c src/parse/parse_chunk.c src/parse/parse.c src/parse/trim_quotes.c \
 			src/pipex/pipex.c src/pipex/pipex_utils.c \
 			src/signals/signal.c \
-			src/tools/env_tools.c src/tools/smart_split.c src/tools/tools.c src/tools/string_tools.c
+			src/tools/env_tools.c src/tools/error.c src/tools/smart_split.c src/tools/tools.c src/tools/string_tools.c
 
-CFLAGS =	-Wall -Wextra # -Werror #-fsanitize=address
+CFLAGS =	-Wall -Wextra -Werror # -fsanitize=address,undefined -g
 
 RED =		\033[0;31m
 BLUE =		\033[0;34m

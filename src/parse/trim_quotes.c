@@ -6,7 +6,7 @@
 /*   By: akuijer <akuijer@student.codam.nl>           +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/04/10 14:15:10 by akuijer       #+#    #+#                 */
-/*   Updated: 2024/04/18 14:46:12 by lbartels      ########   odam.nl         */
+/*   Updated: 2024/04/22 17:44:40 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,7 +22,7 @@ static void	trim_quotes(char *str, int32_t q1, int32_t q2)
 static void	find_quotes(char *str)
 {
 	int32_t	i;
-	int32_t quote_i;
+	int32_t	quote_i;
 	bool	s_quote;
 	bool	d_quote;
 

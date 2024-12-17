@@ -6,7 +6,7 @@
 /*   By: akuijer <akuijer@student.codam.nl>           +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/04/02 14:07:24 by akuijer       #+#    #+#                 */
-/*   Updated: 2024/04/10 16:59:00 by akuijer       ########   odam.nl         */
+/*   Updated: 2024/04/24 16:17:31 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,20 +23,18 @@ static int	get_stringptr_length(char *str, char c, int32_t i)
 	d_quote = false;
 	while (str[i])
 	{
+		check_quotes(&s_quote, &d_quote, i, str);
 		while (str[i] == c)
-		{
-			check_quotes(&s_quote, &d_quote, i, str);
 			i++;
-		}
-		if (str[i] && !s_quote && !d_quote)
+		if (str[i])
 		{
-			check_quotes(&s_quote, &d_quote, i, str);
 			count++;
-		}
-		while (str[i] != c && str[i])
-		{
 			check_quotes(&s_quote, &d_quote, i, str);
+		}
+		while (str[i] && (str[i] != c || s_quote || d_quote))
+		{
 			i++;
+			check_quotes(&s_quote, &d_quote, i, str);
 		}
 	}
 	return (count);
@@ -91,6 +89,17 @@ static void	fill_string(char *str_in, char *str_out, char c, int32_t *i)
 	}
 }
 
+char	**no_command(void)
+{
+	char	**array;
+
+	array = ft_calloc(2, sizeof(char *));
+	array[0] = ft_strdup("\0");
+	if (!array[0])
+		return (NULL);
+	return (array);
+}
+
 char	**smart_split(char *s, char c)
 {
 	int32_t	str_count;
@@ -99,7 +108,7 @@ char	**smart_split(char *s, char c)
 	char	**str_array;
 
 	if (!s)
-		return (0);
+		return (no_command());
 	i = 0;
 	j = 0;
 	str_count = get_stringptr_length(s, c, 0);

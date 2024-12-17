@@ -6,32 +6,28 @@
 /*   By: akuijer <akuijer@student.codam.nl>           +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/03/15 13:01:41 by akuijer       #+#    #+#                 */
-/*   Updated: 2024/04/18 17:50:54 by lbartels      ########   odam.nl         */
+/*   Updated: 2024/04/29 16:17:53 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../incl/minishell.h"
 
-	// for (int i = 0; i < info->cmd_count; i++)
-	// 	printf("%s %s %s\n\n", info->cmd[i].in[0], info->cmd[i].cmd, info->cmd[i].out[0]);
-
 int32_t	g_last_exit_code;
+int8_t	g_status;
 
 void	handle_prompt(char *line, t_pipex *info)
 {
-	//check_input(line);
-	parse_all(line, info);
-	if (!info->cmd[0].cmd || !info->cmd[0].cmd[0])
+	if (check_input(line) == -1)
 	{
-		free_info(info, false);
-		g_last_exit_code = 0;
+		ft_error("Invalid input", 0);
+		g_last_exit_code = 1;
 		return ;
 	}
+	parse_all(line, info);
 	if (check_builtin(info) == true)
 		return ;
 	g_last_exit_code = pipex(*info);
 	free_info(info, false);
-
 }
 
 void	loop(char **env)
@@ -40,17 +36,20 @@ void	loop(char **env)
 	t_pipex	info;
 
 	info.env = env;
-	while (1)
+	while (true)
 	{
-		line = readline("minishell:	");
+		g_status = PARENT;
+		line = readline("minishell: ");
 		if (!line)
 		{
 			rl_clear_history();
 			free_2d(info.env);
-			ft_error("error reading line", 1);
+			ft_putendl_fd("exit", 1);
+			exit(0);
 		}
 		add_history(line);
-		handle_prompt(line, &info);
+		if (line[0])
+			handle_prompt(line, &info);
 		free(line);
 	}
 	rl_clear_history();
@@ -66,5 +65,6 @@ int	main(int argc, char **argv, char **env)
 	}
 	set_signal();
 	env_cpy = init_env(env);
+	inc_shell_lvl(&env_cpy);
 	loop(env_cpy);
 }

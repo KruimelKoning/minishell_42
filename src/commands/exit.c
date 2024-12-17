@@ -6,7 +6,7 @@
 /*   By: lbartels <lbartels@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/04/05 16:59:37 by lbartels      #+#    #+#                 */
-/*   Updated: 2024/04/16 14:33:13 by akuijer       ########   odam.nl         */
+/*   Updated: 2024/04/26 13:04:15 by akuijer       ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,5 +88,6 @@ void	ft_exit(char **split_cmd, t_pipex info)
 	}
 	free_info(&info, true);
 	free_2d(split_cmd);
+	clear_history();
 	exit(exit_code);
 }

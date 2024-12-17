@@ -6,37 +6,11 @@
 /*   By: akuijer <akuijer@student.codam.nl>           +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/03/15 13:11:06 by akuijer       #+#    #+#                 */
-/*   Updated: 2024/04/18 15:07:24 by lbartels      ########   odam.nl         */
+/*   Updated: 2024/04/29 15:24:34 by lbartels      ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../../incl/minishell.h"
-
-void	ft_error(char *error_msg, char exit_val)
-{
-	ft_putstr_fd(RED, 2);
-	if (errno == 0 && error_msg)
-	{
-		ft_putendl_fd(error_msg, 2);
-	}
-	else if (error_msg)
-	{
-		perror(error_msg);
-	}
-	ft_putstr_fd(WHITE, 2);
-	errno = 0;
-	if (exit_val)
-	{
-		rl_clear_history();
-		exit(exit_val);
-	}
-}
-
-void	ft_error2(char *error_msg, char exit_val, t_pipex info)
-{
-	free_info(&info, exit_val != 0);
-	ft_error(error_msg, exit_val);
-}
 
 void	free_2d(char **split)
 {
@@ -51,7 +25,7 @@ void	free_2d(char **split)
 	free(split);
 }
 
-void	free_and_throw(char *err_msg, char exit_val, char **s1, char **s2)
+void	free_and_throw(char *err_msg, uint8_t exit_val, char **s1, char **s2)
 {
 	free_2d(s1);
 	free_2d(s2);
@@ -92,9 +66,24 @@ void	free_info(t_pipex *info, bool free_env)
 		free(info->cmd[i].delim);
 		i++;
 	}
+	free(info->cmd);
 	if (free_env && info->env)
 	{
 		free_2d(info->env);
 		info->env = NULL;
 	}
+}
+
+int	open_file(char *file, char flag, bool append)
+{
+	int	fd;
+
+	fd = -1;
+	if (flag == 'i')
+		fd = open(file, O_RDONLY);
+	else if (flag == 'o' && !append)
+		fd = open(file, O_WRONLY | O_CREAT | O_TRUNC, 0777);
+	else if (flag == 'o' && append)
+		fd = open(file, O_WRONLY | O_CREAT | O_APPEND, 0777);
+	return (fd);
 }

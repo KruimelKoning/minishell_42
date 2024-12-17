@@ -6,7 +6,7 @@
 /*   By: lbartels <lbartels@student.codam.nl>         +#+                     */
 /*                                                   +#+                      */
 /*   Created: 2024/04/05 14:53:06 by lbartels      #+#    #+#                 */
-/*   Updated: 2024/04/18 17:22:14 by lbartels      ########   odam.nl         */
+/*   Updated: 2024/04/26 13:23:48 by akuijer       ########   odam.nl         */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,13 +24,13 @@ bool	check_builtin(t_pipex *info)
 		ft_error2("Split error", 1, *info);
 	trim_cmd(split_cmd);
 	if (!ft_strncmp(split_cmd[0], "cd", 3))
-		ft_cd(split_cmd, *info);
+		ft_cd(split_cmd, info, false);
 	else if (!ft_strncmp(split_cmd[0], "export", 7))
-		ft_export(split_cmd, info);
+		ft_export(split_cmd, info, false);
 	else if (!ft_strncmp(split_cmd[0], "exit", 5))
 		ft_exit(split_cmd, *info);
 	else if (!ft_strncmp(split_cmd[0], "unset", 6))
-		ft_unset(split_cmd, info);
+		ft_unset(split_cmd, info, false);
 	else
 	{
 		free_2d(split_cmd);
